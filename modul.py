@@ -1,21 +1,10 @@
-import pandas as pd
-import os
+import sqlite3
 
 class Transaction:
     """
     Sebuah class untuk kasir self-service disupermarket
 
-    ...
-
-    Attributes
-    ----------
-    id_transaksi : int
-        id_transaksi berjenis input untuk hasil transaksi customer
-    data_all_item : dict
-        data_all_item adalah tempat penyimpanan data order transaksi yang berhasil diinput oleh customer kedalam sistem
     """
-
-    data_all_item = {"Nama item": [], "Jumlah item": [], "Harga per item": [], "Total Harga": []}
 
     def __init__(self):
       """
@@ -25,239 +14,170 @@ class Transaction:
       ----------
       Tidak terdapat parameter pada fungsi Constructor
 
-      Attributes
-      ----------
-      id_transaksi : int
-          id_transaksi berjenis input untuk hasil transaksi customer
       """
-
-      print("<-----------------Welcome to Super Cashier----------------->")
-      while 1:
-          try:
-              id_transaksi = int(input("Masukkan ID Transaksi anda: "))
-              print("ID Transaksi anda {}".format(id_transaksi))
-              print("\n")
-              break
-          except ValueError:
-              print("ID Transaksi tidak valid!")
-              continue
+      self.items = {}
+      self.total_belanja = 0
       while 1:
           print("<-----------------------list perintah----------------------->")
           print("- tambah order transaksi ketik: add_item")
           print("- ubah nama item order transaksi ketik: update_item_name")
           print("- ubah jumlah item order transaksi ketik: update_item_qty")
           print("- ubah harga per item order transaksi ketik: update_item_price")
-          print("- validasi order transaksi ketik: check_order_item")
+          print("- validasi order transaksi ketik: check_order")
           print("- hapus salah satu order transaksi ketik: delete_item")
           print("- hapus seluruh order transaksi ketik: reset_transaction")
-          print("- tampilkan biaya untuk seluruh order transaksi ketik: total_price")
+          print("- tampilkan biaya untuk seluruh order transaksi ketik: check_out")
           print("- keluar dari program ketik: keluar")
           print("\n")
           perlu = input("Masukkan perintah sesuai keperluan: ")
+
           if perlu.lower() == "add_item":
-              self.add_item()
+              nama_item = input("Nama item yang dibeli: ")
+              while 1:
+                  try:
+                      jumlah_item = int(input("Jumlah item yang dibeli: "))
+                      break
+                  except ValueError:
+                      print("Input berupa angka!")
+                      continue
+              while 1:
+                  try:
+                      harga = int(input("Harga per item yang dibeli: "))
+                      break
+                  except ValueError:
+                      print("Input berupa angka!")
+                      continue
+              self.add_item([nama_item, jumlah_item, harga])
               print("\n")
+
           elif perlu.lower() == "update_item_name":
-              self.update_item_name()
+              while 1:
+                nama_item = input("Nama item sebelum diubah: ")
+                if nama_item in self.items:
+                    update_nama_item = input("Update nama item yang ingin diubah: ")
+                    self.update_item_name(nama_item, update_nama_item)
+                    break
+                else:
+                    print("Tidak terdapat nama item tersebut!")
               print("\n")
+
           elif perlu.lower() == "update_item_qty":
-              self.update_item_qty()
+              while 1:
+                nama_item = input("Nama item sebelum diubah: ")
+                if nama_item in self.items:
+                    update_quantity_item = input("Update quantity item yang ingin diubah: ")
+                    self.update_item_qty(nama_item, update_quantity_item)
+                    break
+                else:
+                    print("Tidak terdapat nama item tersebut!")
               print("\n")
+
           elif perlu.lower() == "update_item_price":
-              self.update_item_price()
+              while 1:
+                nama_item = input("Nama item sebelum diubah: ")
+                if nama_item in self.items:
+                    update_price_item = input("Update price item yang ingin diubah: ")
+                    self.update_item_price(nama_item, update_price_item)
+                    break
+                else:
+                    print("Tidak terdapat nama item tersebut!")
               print("\n")
-          elif perlu.lower() == "check_order_item":
-              self.check_order_item()
+
+          elif perlu.lower() == "check_order":
+              self.check_order()
               print("\n")
+
           elif perlu.lower() == "delete_item":
-              self.delete_item()
-              print("\n")
+              while 1:
+                nama_item = input("Nama item dihapus: ")
+                if nama_item in self.items:
+                    self.delete_item(nama_item)
+                    break
+                else:
+                    print("Tidak terdapat nama item tersebut!")
+
           elif perlu.lower() == "reset_transaction":
               self.reset_transaction()
+              print("Semua Item berhasil di Delete")
               print("\n")
-          elif perlu.lower() == "total_price":
-              self.total_price()
+
+          elif perlu.lower() == "check_out":
+              self.check_out()
               print("\n")
+
           elif perlu.lower() == "keluar":
-              # break
-              os._exit(0)
+              break
+
           else:
               print("Mohon masukkan perintah dengan benar dan sesuai!")
               print("\n")
+      print(self.items)
 
-    def add_item(self):
+    def add_item(self, item):
       """
       Sebuah fungsi untuk menambahkan item baru kedalam keranjang
 
       Parameters
       ----------
-      Tidak terdapat parameter pada fungsi add_item
-
-      Attributes
-      ----------
-      nama_item : str
-          nama_item berjenis input untuk nama item yang dimasukkan kedalam keranjang
-      jumlah_item : int
-          jumlah_item berjenis input untuk jumlah item yang dimasukkan kedalam keranjang
-      harga : int
-          harga berjenis input untuk harga per item yang dimasukkan kedalam keranjang
-      total_harga : int
-          Penghitung total_harga dengan melakukan perkalian terhadap jumlah item dan harga per item
+      terdapat parameter pada fungsi item
 
       Return
       ------
       Menyimpan seluruh data yang berhasil diinput oleh customer kedalam database
       """
+      if item[0] in self.items:
+          self.items[item[0]][0] += item[1]
+      else:
+          self.items[item[0]] = [item[1], item[2]]
 
-      nama_item = input("Nama item yang dibeli: ")
-
-      while 1:
-          try:
-              jumlah_item = int(input("Jumlah item yang dibeli: "))
-              break
-          except ValueError:
-              print("Input berupa angka!")
-              continue
-
-      while 1:
-          try:
-              harga = int(input("Harga per item yang dibeli: "))
-              break
-          except ValueError:
-              print("Input berupa angka!")
-              continue
-
-      self.data_all_item["Nama item"].append(nama_item)
-      self.data_all_item["Jumlah item"].append(jumlah_item)
-      self.data_all_item["Harga per item"].append(harga)
-      self.data_all_item["Total Harga"].append(jumlah_item * harga)
-
-    def update_item_name(self):
+    def update_item_name(self, old_name, new_name):
       """
       Sebuah fungsi untuk mengubah data nama item pada order transaksi yang telah diinput oleh customer
 
       Parameters
       ----------
-      Tidak terdapat parameter pada fungsi update_item_name
-
-      Attributes
-      ----------
-      nama_item : str
-          nama_item berjenis input untuk nama item yang ingin dilakukan perubahan pada nama item
-      update_nama_item : int
-          update_nama_item berjenis input untuk nama item terbaru
-      idx_item : int
-          idx_item untuk menyimpan posisi index dari nama item yang customer input
+      terdapat parameter pada fungsi old_name, new_name
 
       Return
       ------
       Menyimpan seluruh data perubahan pada nama item yang berhasil diinput oleh customer kedalam database
       """
+      if old_name in self.items:
+          self.items[new_name] = self.items.pop(old_name)
 
-      while 1:
-          nama_item = input("Nama item sebelum diubah: ")
-
-          if nama_item in self.data_all_item.get("Nama item"):
-              update_nama_item = input("Update nama item yang ingin diubah: ")
-              idx_item = self.data_all_item['Nama item'].index(nama_item)
-              self.data_all_item['Nama item'][idx_item] = update_nama_item
-              print("Berhasil dirubah!")
-              break
-
-          else:
-              print("Tidak terdapat nama item tersebut!")
-
-    def update_item_qty(self):
+    def update_item_qty(self, name, qty):
       """
       Sebuah fungsi untuk mengubah data jumlah item pada order transaksi yang telah diinput oleh customer
 
       Parameters
       ----------
-      Tidak terdapat parameter pada fungsi update_item_qty
-
-      Attributes
-      ----------
-      nama_item : str
-          nama_item berjenis input untuk nama item yang ingin dilakukan perubahan pada jumlah item
-      update_jumlah_item : int
-          update_jumlah_item berjenis input untuk jumlah item terbaru
-      idx_item : int
-          idx_item untuk menyimpan posisi index dari nama item yang customer input
+      terdapat parameter pada fungsi name, qty
 
       Return
       ------
       Menyimpan seluruh data perubahan pada jumlah item yang berhasil diinput oleh customer kedalam database
       """
 
-      while 1:
-          nama_item = input("Nama item yang ingin diubah: ")
+      if name in self.items:
+          self.items[name][0] = qty
 
-          if nama_item in self.data_all_item.get("Nama item"):
-              while 1:
-                  try:
-                      update_jumlah_item = int(input("Update jumlah item yang dibeli: "))
-                      break
-                  except ValueError:
-                      print("Input berupa angka!")
-                      continue
-              idx_item = self.data_all_item['Nama item'].index(nama_item)
-              self.data_all_item['Jumlah item'][idx_item] = update_jumlah_item
-
-              self.data_all_item["Total Harga"][idx_item] = (
-                          update_jumlah_item * self.data_all_item["Harga per item"][idx_item])
-
-              print("Berhasil dirubah!")
-              break
-
-          else:
-              print("Tidak terdapat nama item tersebut!")
-
-    def update_item_price(self):
+    def update_item_price(self, name, price):
       """
       Sebuah fungsi untuk mengubah data harga per item pada order transaksi yang telah diinput oleh customer
 
       Parameters
       ----------
-      Tidak terdapat parameter pada fungsi update_item_price
-
-      Attributes
-      ----------
-      nama_item : str
-          nama_item berjenis input untuk nama item yang ingin dilakukan perubahan pada harga per item
-      update_harga_item : int
-          update_harga_item berjenis input untuk harga per item terbaru
-      idx_item : int
-          idx_item untuk menyimpan posisi index dari nama item yang customer input
+      Tidak terdapat parameter pada fungsi name, price
 
       Return
       ------
       Menyimpan seluruh data perubahan pada harga per item yang berhasil diinput oleh customer kedalam database
       """
 
-      while 1:
-          nama_item = input("Nama item yang ingin diubah: ")
+      if name in self.items:
+          self.items[name][1] = price
 
-          if nama_item in self.data_all_item.get("Nama item"):
-              while 1:
-                  try:
-                      update_harga_item = int(input("Update harga per item yang dibeli: "))
-                      break
-                  except ValueError:
-                      print("Input berupa angka!")
-                      continue
-              idx_item = self.data_all_item['Nama item'].index(nama_item)
-              self.data_all_item['Harga per item'][idx_item] = update_harga_item
-
-              self.data_all_item["Total Harga"][idx_item] = (
-                          update_harga_item * self.data_all_item["Jumlah item"][idx_item])
-
-              print("Berhasil dirubah!")
-              break
-
-          else:
-              print("Tidak terdapat nama item tersebut!")
-
-    def check_order_item(self):
+    def check_order(self):
       """
       Sebuah fungsi untuk melihat apakah terdapat kesalahan penginputan data pada transaksi
 
@@ -265,30 +185,25 @@ class Transaction:
       ----------
       Tidak terdapat parameter pada fungsi check_order_item
 
-      Attributes
-      ----------
-      df : dataframe
-          df digunakan untuk menampilkan data-data order transaksi dalam bentuk dataframe atau tabular
-
       Return
       ------
       Menampilkan apakah terdapat kesalahan dalam penginputan data pada transaksi dan data yang berhasil diinput oleh customer
       """
 
-      if not any(self.data_all_item.values()):
-          print("Tidak ada data transaksi!")
-      elif '' in self.data_all_item['Nama item']:
-          print("Mohon mengisi nama item yang kosong!")
-          print("<--------List order item-------->")
-          df = pd.DataFrame(self.data_all_item)
-          print(df)
-      else:
-          print("Data transaksi sudah benar!")
-          print("<--------List order item-------->")
-          df = pd.DataFrame(self.data_all_item)
-          print(df)
+      print("| No | Nama Item | Jumlah Item | Harga/Item | Total Harga |")
+      print("|----|-----------|-------------|------------|-------------|")
+      i = 0
+      for item in self.items:
+          i += 1
+          if not item or self.items[item][0] < 1 or self.items[item][1] < 1:
+              return "Terdapat kesalahan input data"
+          else:
+              total_price = self.items[item][0] * self.items[item][1]
+              print(
+                  f"| {i}  | {item}     |{self.items[item][0]}            |{self.items[item][1]}      |   {total_price}    |")
+      return "Pemesanan sudah benar"
 
-    def delete_item(self):
+    def delete_item(self, name):
       """
       Sebuah fungsi untuk menghapus salah satu item yang berhasil diinput oleh customer pada transaksi
 
@@ -296,38 +211,13 @@ class Transaction:
       ----------
       Tidak terdapat parameter pada fungsi delete_item
 
-      Attributes
-      ----------
-      nama_item : str
-          nama_item berjenis input untuk nama item yang ingin dilakukan penghapusan order transaksi
-      df : dataframe
-          df digunakan untuk menampilkan data-data order transaksi dalam bentuk dataframe atau tabular
-      idx_item : int
-          idx_item untuk menyimpan posisi index dari nama item yang customer input
-
       Return
       ------
       Menghapus salah satu order transaksi pada data database
       """
 
-      while 1:
-          nama_item = input("Nama item yang ingin dihapus: ")
-
-          if nama_item in self.data_all_item.get("Nama item"):
-              idx_item = self.data_all_item['Nama item'].index(nama_item)
-              for key in list(self.data_all_item.keys()):
-                  del self.data_all_item[key][idx_item]
-
-              print("Berhasil dihapus!")
-              if not any(self.data_all_item.values()):
-                  print("Tidak ada data transaksi!")
-              else:
-                  df = pd.DataFrame(self.data_all_item)
-                  print(df)
-              break
-
-          else:
-              print("Tidak terdapat nama item tersebut!")
+      if name in self.items:
+          del self.items[name]
 
     def reset_transaction(self):
       """
@@ -337,22 +227,18 @@ class Transaction:
       ----------
       Tidak terdapat parameter pada fungsi reset_transaction
 
-      Attributes
-      ----------
-      Tidak terdapat attribute pada fungsi reset_transaction
-
       Return
       ------
       Menghapus seluruh order transaksi pada data database
       """
 
-      for key in list(self.data_all_item.keys()):
-          del self.data_all_item[key][:]
+      self.items = {}
 
       print("Berhasil menghapus seluruh transaksi!")
 
 
-    def total_price(self):
+    def check_out(self):
+      check_out_item = {}
       """
       Sebuah fungsi untuk menghitung total biaya yang harus dibayarkan customer dari item-item pada data transaksi
 
@@ -360,33 +246,70 @@ class Transaction:
       ----------
       Tidak terdapat parameter pada fungsi total_price
 
-      Attributes
-      ----------
-      df : dataframe
-          df digunakan untuk menampilkan data-data order transaksi dalam bentuk dataframe atau tabular
-
       Return
       ------
       Menampilkan total biaya yang harus dibayar oleh customer tersebut dengan beberapa kriteria yaitu
-      - diatas Rp. 500.000 akan mendapatkan potongan biaya sebesar 10% dari total biaya yang harus dibayarkan
-      - diatas Rp. 300.000 akan mendapatkan potongan biaya sebesar 8% dari total biaya yang harus dibayarkan
-      - diatas Rp. 200.000 akan mendapatkan potongan biaya sebesar 5% dari total biaya yang harus dibayarkan
+      - diatas Rp. 500.000 akan mendapatkan potongan biaya sebesar 7% dari total biaya per Item yang harus dibayarkan
+      - diatas Rp. 300.000 akan mendapatkan potongan biaya sebesar 6% dari total biaya per Item  yang harus dibayarkan
+      - diatas Rp. 200.000 akan mendapatkan potongan biaya sebesar 5% dari total biaya per Item  yang harus dibayarkan
       """
+      print("| No | Nama Item | Jumlah Item | Harga/Item | Total Harga | Diskon | Harga Diskon |")
+      print("|----|-----------|-------------|------------|-------------|--------|--------------|")
+      i = 0
+      total_belanja = 0
+      for item in self.items:
+          total = self.items[item][0] * self.items[item][1]
+          if total > 500000:
+              discount = 0.07
+              diskon_str = "7%"
+          elif total > 300000:
+              discount = 0.06
+              diskon_str = "6%"
+          elif total > 200000:
+              discount = 0.05
+              diskon_str = "5%"
+          else:
+              discount = 0
+              diskon_str = "-"
+          discounted_total = total - (total * (discount))
+          check_out_item[item] = [self.items[item][0], self.items[item][1], discount, discounted_total]
+          i += 1
+          if not item or self.items[item][0] < 1 or self.items[item][1] < 1:
+              return "Terdapat kesalahan input data"
+          else:
+              total_price = self.items[item][0] * self.items[item][1]
+              total_diskon = round(total_price * (1 - discount))
+              print(
+                  f"| {i}  | {item}     |{self.items[item][0]}            |{self.items[item][1]}      |   {total_price}    |    {diskon_str}   |    {total_diskon}    |")
+          self.insert_to_table(check_out_item)
+          total_belanja += total_diskon
+      print("Total Belanja",total_belanja)
 
-      if not any(self.data_all_item.values()):
-          print("Tidak ada data transaksi!")
-      else:
-          df = pd.DataFrame(self.data_all_item)
-          print(df)
-          if sum(self.data_all_item["Total Harga"]) > 500000:
-              print("Sebelum mendapatkan diskon 10%: Rp.{}".format(sum(self.data_all_item["Total Harga"])))
-              print("Setelah mendapatkan diskon 10%: Rp.{}".format(
-                  int(sum(self.data_all_item["Total Harga"]) - (sum(self.data_all_item["Total Harga"]) * 0.10))))
-          elif sum(self.data_all_item["Total Harga"]) > 300000:
-              print("Sebelum mendapatkan diskon 8%: Rp.{}".format(sum(self.data_all_item["Total Harga"])))
-              print("Setelah mendapatkan diskon 8%: Rp.{}".format(
-                  sum(int(self.data_all_item["Total Harga"]) - (sum(self.data_all_item["Total Harga"]) * 0.08))))
-          elif sum(self.data_all_item["Total Harga"]) > 200000:
-              print("Sebelum mendapatkan diskon 5%: Rp.{}".format(sum(self.data_all_item["Total Harga"])))
-              print("Setelah mendapatkan diskon 5%: Rp.{}".format(
-                  sum(int(self.data_all_item['Total Harga']) - (sum(self.data_all_item["Total Harga"]) * 0.05))))
+    def insert_to_table(self, check_out_item):
+        conn = sqlite3.connect('transaction.db')
+        c = conn.cursor()
+        c.execute(
+            """ DROP TABLE IF EXISTS transactions; """)
+        c.execute(
+            """
+            CREATE TABLE transactions (
+                no_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nama_item DATATYPE, 
+                jumlah_item INTERGER, 
+                harga INTERGER, 
+                total_harga INTERGER, 
+                diskon INTERGER, 
+                harga_diskon INTERGER
+            ); """)
+        for item in check_out_item:
+            jumlah_item = check_out_item[item][0]
+            harga = check_out_item[item][1]
+            total_harga = jumlah_item * harga
+            diskon = total_harga * check_out_item[item][2]
+            harga_diskon = total_harga - diskon
+            list_item = [item, jumlah_item, harga, total_harga, diskon, round(harga_diskon)]
+            c.execute(
+                "INSERT INTO transactions (nama_item, jumlah_item, harga, total_harga, diskon, harga_diskon) VALUES (?, ?, ?, ?, ?, ?)",
+                (list_item))
+        conn.commit()
+        conn.close()
